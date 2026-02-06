@@ -1,0 +1,58 @@
+include:
+  - path: dify/docker-compose.yaml
+    env_file: dify/.env
+
+services:
+  # 1. Vector DB (Managed by Dify)
+
+
+  # 2. Langfuse Database (Postgres)
+  langfuse-db:
+    image: postgres:16
+    ports:
+      - "5432:5432"
+    restart: always
+    environment:
+      - POSTGRES_USER=langfuse
+      - POSTGRES_PASSWORD=langfuse
+      - POSTGRES_DB=langfuse
+    volumes:
+      - langfuse_postgres:/var/lib/postgresql/data
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U langfuse" ]
+      interval: 3s
+      timeout: 3s
+      retries: 5
+
+  # 3. Langfuse Server
+  langfuse-server:
+    image: langfuse/langfuse:2
+    depends_on:
+      langfuse-db:
+        condition: service_healthy
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=production
+      - DATABASE_URL=postgresql://langfuse:langfuse@langfuse-db:5432/langfuse
+      - NEXTAUTH_SECRET=mysecret
+      - NEXTAUTH_URL=http://localhost:3000
+      - AUTH_TRUST_HOST=true
+      - SALT=mysalt
+      - ENCRYPTION_KEY=cf7bb2f78a881cd14609d12010c3875c79e85e7a0559aa9880f24e2cda4818c7
+      # Auto-Provision Admin User & Project
+      - LANGFUSE_INIT_ORG_ID=org-123
+      - LANGFUSE_INIT_PROJECT_ID=project-123
+      - LANGFUSE_INIT_PROJECT_PUBLIC_KEY=pk-lf-init
+      - LANGFUSE_INIT_PROJECT_SECRET_KEY=sk-lf-init
+      - LANGFUSE_INIT_USER_EMAIL=admin@example.com
+      - LANGFUSE_INIT_USER_PASSWORD=password
+      - LANGFUSE_INIT_USER_NAME=Admin
+      # Fix for Self-Signed Certs (Proxy/Corp Network)
+      - NODE_TLS_REJECT_UNAUTHORIZED=0
+      - TELEMETRY_ENABLED=false
+    restart: always
+
+volumes:
+  qdrant_storage:
+  langfuse_postgres:

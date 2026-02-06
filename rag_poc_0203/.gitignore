@@ -1,0 +1,7 @@
+__pycache__/
+.env
+dify/volumes/
+data/
+qdrant_storage/
+*.pyc
+.DS_Store
