@@ -8,12 +8,24 @@ docker compose up -d --remove-orphans
 # 2. FastAPI Backend
 echo "2. Starting Backend API (Port 8000)..."
 # Check if port 8000 is free, if not, kill it (optional, risky for now)
-poetry run uvicorn app.api.server:app --reload --port 8000 &
+# Check for poetry command
+if command -v poetry &> /dev/null; then
+    POETRY_CMD="poetry"
+elif [ -f "$HOME/.local/bin/poetry" ]; then
+    POETRY_CMD="$HOME/.local/bin/poetry"
+elif [ -f "/opt/homebrew/bin/poetry" ]; then
+    POETRY_CMD="/opt/homebrew/bin/poetry"
+else
+    echo "❌ Error: poetry not found within PATH or standard locations. Please install poetry."
+    exit 1
+fi
+
+$POETRY_CMD run uvicorn app.api.server:app --reload --port 8000 &
 PID_API=$!
 
 # 3. Streamlit UI
 echo "3. Starting Operator UI (Port 8501)..."
-poetry run streamlit run app/ui/streamlit_app.py &
+$POETRY_CMD run streamlit run app/ui/streamlit_app.py &
 PID_UI=$!
 
 echo "✅ All services started!"
