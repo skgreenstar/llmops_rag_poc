@@ -3,7 +3,7 @@ echo "🚀 Starting AI Service Stack..."
 
 # 1. Docker Services
 echo "1. Ensuring All Docker services (Apps + Dify) are up..."
-docker-compose up -d --remove-orphans
+docker compose up -d --remove-orphans
 
 # 2. FastAPI Backend
 echo "2. Starting Backend API (Port 8000)..."
